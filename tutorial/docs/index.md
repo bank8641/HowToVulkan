@@ -651,7 +651,9 @@ chk(vkCreateCommandPool(device, &commandPoolCI, nullptr, &commandPool));
 
 The [`VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT`](https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandPoolCreateFlagBits.html) flag lets us implicitly reset command buffers when [recording them](#record-command-buffers). We also have to specify the queue family that the command buffers allocated from this pool will be submitted too.
 
-> **Note:** It's not uncommon to have multiple command pools in a more complex application. They're cheap to create and if you want to record command buffers from multiple threads you require one such pool per thread.
+!!! Tip
+
+	It's not uncommon to have multiple command pools in a more complex application. They're cheap to create and if you want to record command buffers from multiple threads you require one such pool per thread.
 
 Command buffers will be recorded on the CPU and executed on the GPU, so we create one per max. [frames in flight](#cpu-and-gpu-parallelism):
 
@@ -682,7 +684,9 @@ for (auto i = 0; i < textures.size(); i++) {
 	...
 ```
 
-> **Note:** The textures we load use an 8-bit per channel RGBA format, even though we don't use the alpha channel. You might be tempted to use RGB instead to save memory, but RGB isn't widely supported. If you used such formats in OpenGL the driver often secretly converted them to RGBA. In Vulkan trying to use an unsupported format instead would just fail.
+!!! Warning
+
+	The textures we load use an 8-bit per channel RGBA format, even though we don't use the alpha channel. You might be tempted to use RGB instead to save memory, but RGB isn't widely supported. If you used such formats in OpenGL the driver often secretly converted them to RGBA. In Vulkan trying to use an unsupported format instead would just fail.
 
 Creating the image (object) is very similar to how we created the [depth attachment](#depth-attachment):
 
@@ -818,7 +822,9 @@ vkEndCommandBuffer(cbOneTime);
 
 It might look a bit overwhelming at first but it's easily explained. Earlier on we learned about optimal tiled images, where texels are stored in a hardware-specific layout for optimal access by the GPU. That [layout](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-image-layouts) also defines what operations are possible with an image. That's why we need to change said layout depending on what we want to do next with our image. That's done via a pipeline barrier issued by [vkCmdPipelineBarrier2](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPipelineBarrier2.html). The first one transitions all mip levels of the texture image from the initial undefined layout to a layout that allows us to transfer data to it (`VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL`). We then copy over all the mip levels from our temporary buffer to the image using [vkCmdCopyBufferToImage](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyBufferToImage.html). Finally we transition the mip levels from transfer destination to a layout we can read from in our shader (`VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL`).
 
-> **Note:** Extensions that would make this easier are [VK_EXT_host_image_copy](https://www.khronos.org/blog/copying-images-on-the-host-in-vulkan), allowing for copying image date directly from the CPU without having to use a command buffer and [VK_KHR_unified_image_layouts](https://www.khronos.org/blog/so-long-image-layouts-simplifying-vulkan-synchronisation), simplifying image layouts. These aren't widely supported yet, but future candidates for making Vulkan easier to use.
+!!! Tip
+
+	Extensions that would make this easier are [VK_EXT_host_image_copy](https://www.khronos.org/blog/copying-images-on-the-host-in-vulkan), allowing for copying image date directly from the CPU without having to use a command buffer and [VK_KHR_unified_image_layouts](https://www.khronos.org/blog/so-long-image-layouts-simplifying-vulkan-synchronisation), simplifying image layouts. These aren't widely supported yet, but future candidates for making Vulkan easier to use.
 
 Later on we'll sample these textures in our shader. How sampling is done in the shader is defined by a sampler object. We want smooth linear filtering, so we enable [anisotropic filter](https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-texel-anisotropic-filtering) to reduce blur and aliasing. We also set the max. LOD do use all mip levels:
 
@@ -873,7 +879,9 @@ chk(vkCreateDescriptorSetLayout(device, &descLayoutTexCI, nullptr, &descriptorSe
 
 As we're only using descriptors for images, we just have a single binding. The [VkDescriptorSetLayoutBindingFlagsCreateInfo](https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorSetLayoutBindingFlagsCreateInfo.html) is used to enable a variable number of descriptors in that binding as part of descriptor indexing and is passed via `pNext`. We combine texture images and samplers (see below), so the binding's type needs to be [`VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER`](https://docs.vulkan.org/refpages/latest/refpages/source/VkDescriptorType.html). There will be as many descriptors in that layout as we have textures loaded and we only need to access this from  the fragment shader, so we set `stageFlags` to `VK_SHADER_STAGE_FRAGMENT_BIT`. A call to [vkCreateDescriptorSetLayout](https://docs.vulkan.org/refpages/latest/refpages/source/vkCreateDescriptorSetLayout.html) will then create a descriptor set layout with this configuration. We need this to allocate the descriptor and for defining the shader interface at [pipeline creation](#graphics-pipeline).
 
-> **Note:** There are scenarios where you could separate images and samplers, e.g. if you have a lot of images and don't want to waste memory on having samplers for each or if you want to dynamically use different sampling options. In that case you'd use two pool sizes, one for `VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE `and one for `VK_DESCRIPTOR_TYPE_SAMPLER `.
+!!! Tip
+
+	There are scenarios where you could separate images and samplers, e.g. if you have a lot of images and don't want to waste memory on having samplers for each or if you want to dynamically use different sampling options. In that case you'd use two pool sizes, one for `VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE `and one for `VK_DESCRIPTOR_TYPE_SAMPLER `.
 
 Similar to command buffers, descriptors are allocated from a descriptor pool:
 
@@ -1026,7 +1034,9 @@ float4 main(VSOutput input) {
 }
 ```
 
-> **Note:** Slang lets us put all shader stages into a single file. That removes the need to duplicate the shader interface or having to put that into shared includes. It also makes it easier to read (and edit) the shader.
+!!! Tip
+
+	Slang lets us put all shader stages into a single file. That removes the need to duplicate the shader interface or having to put that into shared includes. It also makes it easier to read (and edit) the shader.
 
 It contains two shading stages and starts with defining structures that are used by the different stages. The `UBO` structure matches the layout of the uniform buffer data defined on the [CPU-side](#uniform-buffers).
 
@@ -1038,7 +1048,9 @@ Second is the fragment shader, marked by the `[shader("fragment")]` attribute. T
 
 Another area where Vulkan strongly differs from OpenGL is state management. OpenGL was a huge state machine, and that state could be changed at any time. This made it hard for drivers to optimize things. Vulkan fundamentally changes that by introducing pipeline state objects. They provide a full set of pipeline state in a "compiled" pipeline object, giving the driver a chance to optimize them. These objects also allow for pipeline object creation in e.g. a separate thread. If you need different pipeline state that means you have to create a new pipeline state object. 
 
-> **Note:** There is *some* state in Vulkan that can be dynamic. Mostly basic state like viewport and scissor setup. Them being dynamic is not an issue for drivers. There are several extensions that make additional state dynamic, but we're not going to use them here.
+!!! Note
+
+	There is *some* state in Vulkan that can be dynamic. Mostly basic state like viewport and scissor setup. Them being dynamic is not an issue for drivers. There are several extensions that make additional state dynamic, but we're not going to use them here.
 
 Vulkan supports [dedicated pipeline types](https://docs.vulkan.org/refpages/latest/refpages/source/VkPipelineBindPoint.html) for graphics, compute, raytracing. Setting up one of these depends on that type. We only do graphics (aka [rasterization](https://en.wikipedia.org/wiki/Rasterisation)) so we'll be creating a graphics pipeline.
 
@@ -1350,7 +1362,9 @@ Not only do [image memory barriers](https://docs.vulkan.org/spec/latest/chapters
 
 The *first barrier* transitions the current swapchain image *to* a [layout](https://docs.vulkan.org/refpages/latest/refpages/source/VkImageLayout.html) (`newLayout`) so that we can use it as a color attachment for rendering. Similarly the *second barrier* transitions the depth image *to* a layout so that we can use it as a depth attachment for rendering. Both transition *from* and undefined layout (`oldLayout`). That's because we don't need the previous content of any of these images.
 
-> **Note:** The `VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL` layout is a core feature of Vulkan 1.3 that combines all types of attachment layouts into a single one. This simplifies image barriers.
+!!! Tip
+
+	The `VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL` layout is a core feature of Vulkan 1.3 that combines all types of attachment layouts into a single one. This simplifies image barriers.
 
 A call to [vkCmdPipelineBarrier2](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPipelineBarrier2.html) will then insert those two barriers into the current command buffer.
 
