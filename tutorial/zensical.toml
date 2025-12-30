@@ -3,10 +3,11 @@
 site_name = "How to Vulkan"
 site_description = "How to write Vulkan graphics code in 2026"
 site_author = "Sascha Willems"
-#site_url = "https://www.example.com/"
+site_url = "https://www.howtovulkan.com/"
 copyright = """
 Copyright &copy; 2025-2026, <a href="https://www.saschawillems.de">Sascha Willems</a>
 """
+repo_url = "https://github.com/SaschaWillems/HowToVulkan"
 
 # Zensical supports both implicit navigation and explicitly defined navigation.
 # If you decide not to define a navigation here then Zensical will simply

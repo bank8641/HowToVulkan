@@ -3,7 +3,7 @@ Copyright (c) 2025, Sascha Willems
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
-# How to Vulkan in 202X
+# How to Vulkan in 2026
 
 !!! Note
 
@@ -11,7 +11,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## About
 
-[This repository](https://github.com/SaschaWillems/HowToVulkan) and the accompanying tutorial demonstrate how to write a "modern" Vulkan application in 202X. The goal is to use as little code as possible for displaying something that's more than just a basic colored triangle. 
+[This repository](https://github.com/SaschaWillems/HowToVulkan) and the accompanying tutorial demonstrate how to write a "modern" Vulkan application in 2026. The goal is to use as little code as possible for displaying something that's more than just a basic colored triangle. 
 
 Vulkan was released almost 10 years ago, and a lot has changed. Version 1.0 had to make many concessions to support a broad range of GPUs across desktop and mobile. Some of the initial concepts like render passes turned out to be not so optimal, and have been replaced by alternatives. Not only did the API mature, but so did the ecosystem giving us e.g. new options for writing shaders in languages different than GLSL.
 
