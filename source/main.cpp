@@ -65,6 +65,7 @@ struct UniformData {
 	glm::mat4 projection;
 	glm::mat4 view;
 	glm::mat4 model[3];
+	glm::vec4 lightPos{ 0.0f, -10.0f, 10.0f, 0.0f };
 	uint32_t selected{1};
 } uniformData{};
 struct UniformBuffers {
@@ -90,6 +91,7 @@ glm::vec3 objectRotations[3]{};
 sf::Vector2i lastMousePos{};
 struct Vertex {
 	glm::vec3 pos;
+	glm::vec3 normal;
 	glm::vec2 uv;
 };
 
@@ -205,7 +207,11 @@ int main()
 	std::vector<uint16_t> indices{};
 	// Load vertex and index data
 	for (auto& index : shapes[0].mesh.indices) {
-		Vertex v{ .pos = { attrib.vertices[index.vertex_index * 3], -attrib.vertices[index.vertex_index * 3 + 1], attrib.vertices[index.vertex_index * 3 + 2] }, .uv = { attrib.texcoords[index.texcoord_index * 2], 1.0 - attrib.texcoords[index.texcoord_index * 2 + 1] } };
+		Vertex v{
+			.pos = { attrib.vertices[index.vertex_index * 3], -attrib.vertices[index.vertex_index * 3 + 1], attrib.vertices[index.vertex_index * 3 + 2] },
+			.normal = { attrib.normals[index.normal_index * 3], -attrib.normals[index.normal_index * 3 + 1], attrib.normals[index.normal_index * 3 + 2] },
+			.uv = { attrib.texcoords[index.texcoord_index * 2], 1.0 - attrib.texcoords[index.texcoord_index * 2 + 1] } 
+		};
 		vertices.push_back(v);
 		indices.push_back(indices.size());
 	}
@@ -381,13 +387,14 @@ int main()
 	VkVertexInputBindingDescription vertexBinding{ .binding = 0, .stride = sizeof(Vertex), .inputRate = VK_VERTEX_INPUT_RATE_VERTEX };
 	std::vector<VkVertexInputAttributeDescription> vertexAttributes{
 		{ .location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT },
-		{ .location = 1, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, uv) },
+		{ .location = 1, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(Vertex, normal) },
+		{ .location = 2, .binding = 0, .format = VK_FORMAT_R32G32_SFLOAT, .offset = offsetof(Vertex, uv) },
 	};
 	VkPipelineVertexInputStateCreateInfo vertexInputState{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		.vertexBindingDescriptionCount = 1,
 		.pVertexBindingDescriptions = &vertexBinding,
-		.vertexAttributeDescriptionCount = 2,
+		.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributes.size()),
 		.pVertexAttributeDescriptions = vertexAttributes.data(),
 	};
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyState{ .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
@@ -429,7 +436,7 @@ int main()
 		for (auto i = 0; i < 3; i++) {
 			auto instancePos = glm::vec3((float)(i - 1) * 3.0f, 0.0f, 0.0f);
 			uniformData.model[i] = glm::translate(glm::mat4(1.0f), instancePos) * glm::mat4_cast(glm::quat(objectRotations[i]));
-		}
+		}		
 		memcpy(uniformBuffers[frameIndex].mapped, &uniformData, sizeof(UniformData));
 		// Build command buffer
 		auto cb = commandBuffers[frameIndex];
@@ -468,7 +475,7 @@ int main()
 			.imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL,
 			.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
 			.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-			.clearValue{.color{ 0.0f, 0.0f, 0.2f, 1.0f }}
+			.clearValue{.color{ 0.0f, 0.0f, 0.0f, 1.0f }}
 		};
 		VkRenderingAttachmentInfo depthAttachmentInfo{
 			.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,

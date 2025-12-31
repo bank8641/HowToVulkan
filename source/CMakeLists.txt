@@ -52,7 +52,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
 
-add_executable(${NAME} main.cpp)
+add_executable(${NAME} main.cpp assets/shader.slang)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS -DVK_NO_PROTOTYPES)
 set_target_properties(${NAME} PROPERTIES DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_features(${NAME} PRIVATE cxx_std_20)
