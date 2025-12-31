@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2025, Sascha Willems
+Copyright (c) 2025-2026, Sascha Willems
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
 
@@ -11,11 +11,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## About
 
-[This repository](https://github.com/SaschaWillems/HowToVulkan) and the accompanying tutorial demonstrate how to write a "modern" Vulkan application in 2026. The goal is to use as little code as possible for displaying something that's more than just a basic colored triangle. 
+[This repository](https://github.com/SaschaWillems/HowToVulkan) and the accompanying tutorial demonstrate a way to write a [Vulkan](https://vulkan.org/) graphics application in 2026. The goal is to use as as many modern Vulkan features as possible for displaying something that's more than just a basic colored triangle. 
 
-Vulkan was released almost 10 years ago, and a lot has changed. Version 1.0 had to make many concessions to support a broad range of GPUs across desktop and mobile. Some of the initial concepts like render passes turned out to be not so optimal, and have been replaced by alternatives. Not only did the API mature, but so did the ecosystem giving us e.g. new options for writing shaders in languages different than GLSL.
+Vulkan was released almost 10 years ago, and a lot has changed. Version 1.0 had to make many concessions to support a broad range of GPUs across desktop and mobile. Some of the initial concepts like render passes turned out to be not so optimal, and have been replaced by alternatives. The API matured and new areas like raytracing, video acceleration and machine learning were added. Just as important as the API is the ecosystem, which also changed a lot, giving us new options for writing shaders in languages different than GLSL and tools to help with Vulkan.
 
-And so for this tutorial we will be using [Vulkan 1.3](https://docs.vulkan.org/refpages/latest/refpages/source/VK_VERSION_1_3.html) as a baseline. This gives us access to several features that make Vulkan easier to use while still supporting a wide range of GPUs. The ones we will be using are:
+And so for this tutorial we will be using [Vulkan 1.3](https://docs.vulkan.org/refpages/latest/refpages/source/VK_VERSION_1_3.html) as a baseline. This gives us access to several features that make Vulkan easier to use while still supporting a wide range of GPUs and platforms. The ones we will be using are:
 
 | Feature | Description |
 | - | - |
@@ -24,15 +24,15 @@ And so for this tutorial we will be using [Vulkan 1.3](https://docs.vulkan.org/r
 | [Descriptor indexing](https://docs.vulkan.org/refpages/latest/refpages/source/VK_EXT_descriptor_indexing.html) | Simplifies descriptor management, often referred to as "bindless" |
 | [Synchronization2](https://docs.vulkan.org/guide/latest/extensions/VK_KHR_synchronization2.html) | Improves synchronization handling, one of the hardest areas of Vulkan |
 
-tl;dr: Doing Vulkan in 202X can be very different from doing Vulkan in 2016. That's what I hope to show with this.
+tl;dr: Doing Vulkan in 2026 can be very different from doing Vulkan in 2016. That's what I hope to show with this.
 
 ## Target audience
 
 The tutorial is focused on writing actual Vulkan code and getting things up and running as fast as possible (possibly in an afternoon). It won't explain programming, software architecture, graphics concepts or how Vulkan works (in detail). Instead it'll often contain links to relevant information like the [Vulkan specification](https://docs.vulkan.org/). You should bring at least basic knowledge of C/C++ and realtime graphics concepts.
 
-## Goal
+## Approach
 
-This tutorial is focused on rasterization, other parts of Vulkan like compute or raytracing are not covered. At the end of this we'll have multiple textured objects on screen that can be rotated using the mouse. Source comes in a single file with a few hundred lines of code, no abstractions, hard to read modern C++ language constructs or object-oriented shenanigans. I believe that being able to follow source code from top-to-bottom without having to go through multiple layers of abstractions makes it much easier to follow.
+We focus on rasterization, other parts of Vulkan like compute or raytracing are not covered. At the end of this we'll have multiple textured objects on screen that can be rotated using the mouse. Source comes in a single file with a few hundred lines of code, no abstractions, hard to read modern C++ language constructs or object-oriented shenanigans. I believe that being able to follow source code from top-to-bottom without having to go through multiple layers of abstractions makes it much easier to follow.
 
 ## License
 
@@ -40,7 +40,7 @@ Copyright (c) 2025-2026, [Sascha Willems](https://www.saschawillems.de). The con
 
 ## Libraries
 
-Vulkan is a deliberately explicit API, writing code for it can be very verbose. To concentrate on the interesting parts we'll be using the following libraries:
+Vulkan is an explicit low-level API. Writing code for it can be very verbose. To concentrate on the interesting parts we'll be using the following libraries:
 
 * [SFML](https://www.sfml-dev.org/) - Windowing and input (among other things not used in this tutorial). Without a library like this we would have to write a lot of platform specific code. Alternatives are [glfw](https://www.glfw.org/) and [SDL](https://www.libsdl.org/).
 * [Volk](https://github.com/zeux/volk) - Meta-loader that simplifies loading of Vulkan functions.
@@ -55,11 +55,11 @@ Vulkan is a deliberately explicit API, writing code for it can be very verbose. 
 
 ## Programming language
 
-We'll use C++ 20, mostly for its designated initializers. They help with Vulkan's verbosity and improve code readability. Other than that we won't be using any modern language features and also work with the C Vulkan headers instead of the [C++](https://github.com/KhronosGroup/Vulkan-Hpp) ones. Aside from personal preferences this is done to make this tutorial as approachable as possible, even for people that don't work with C++.
+We'll use C++ 20, mostly for its designated initializers. They help with Vulkan's verbosity and improve code readability. Other than that we won't be using modern C++ features and also work with the C Vulkan headers instead of the [C++](https://github.com/KhronosGroup/Vulkan-Hpp) ones. Aside from personal preferences this is done to make this tutorial as approachable as possible, including people that use other programming languages.
 
 ## Shading language
 
-Vulkan does consume shaders in an intermediate format called [SPIR-V](https://www.khronos.org/spirv/). This decouples the API from the actual shading language. Initially only GLSL was supported, but in 2025 there are more and better options. One of those is [Slang](https://github.com/shader-slang) and that's what we'll be using for this tutorial. The language itself is more modern than GLSL and offers some convenient features.
+Vulkan does consume shaders in an intermediate format called [SPIR-V](https://www.khronos.org/spirv/). This decouples the API from the actual shading language. Initially only GLSL was supported, but in 2026 there are more and better options. One of those is [Slang](https://github.com/shader-slang) and that's what we'll be using for this tutorial. The language itself is more modern than GLSL and offers some convenient features.
 
 ## Vulkan SDK
 
