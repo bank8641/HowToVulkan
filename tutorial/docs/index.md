@@ -11,7 +11,7 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 ## About
 
-[This repository](https://github.com/SaschaWillems/HowToVulkan) and the accompanying tutorial demonstrate a way to write a [Vulkan](https://vulkan.org/) graphics application in 2026. The goal is to use as as many modern Vulkan features as possible for displaying something that's more than just a basic colored triangle. 
+[This repository](https://github.com/SaschaWillems/HowToVulkan) and the accompanying tutorial demonstrate a way to write a [Vulkan](https://vulkan.org/) graphics application in 2026. The goal is to use as many modern Vulkan features as possible for displaying something that's more than just a basic colored triangle.
 
 Vulkan was released almost 10 years ago, and a lot has changed. Version 1.0 had to make many concessions to support a broad range of GPUs across desktop and mobile. Some of the initial concepts like render passes turned out to be not so optimal, and have been replaced by alternatives. The API matured and new areas like raytracing, video acceleration and machine learning were added. Just as important as the API is the ecosystem, which also changed a lot, giving us new options for writing shaders in languages different than GLSL and tools to help with Vulkan.
 
@@ -32,11 +32,11 @@ The tutorial is focused on writing actual Vulkan code and getting things up and 
 
 ## Approach
 
-We focus on rasterization, other parts of Vulkan like compute or raytracing are not covered. At the end of this we'll have multiple textured objects on screen that can be rotated using the mouse. Source comes in a single file with a few hundred lines of code, no abstractions, hard to read modern C++ language constructs or object-oriented shenanigans. I believe that being able to follow source code from top-to-bottom without having to go through multiple layers of abstractions makes it much easier to follow.
+We focus on rasterization, other parts of Vulkan like compute or raytracing are not covered. At the end of this we'll have multiple textured objects on screen that can be rotated using the mouse. Source comes in a single file with a few hundred lines of code, no abstractions, hard to read modern C++ language constructs or object-oriented shenanigans. I believe that being able to follow source code from top to bottom without having to go through multiple layers of abstractions makes it much easier to follow.
 
 ## License
 
-Copyright (c) 2025-2026, [Sascha Willems](https://www.saschawillems.de). The contents of this document are licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) license. Source code listings and files are licensed under the MIT license.
+Copyright (c) 2025-2026, [Sascha Willems](https://www.saschawillems.de). The contents of this document are licensed under the [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) license. Source code listings and files are licensed under the MIT license.
 
 ## Libraries
 
@@ -59,7 +59,7 @@ We'll use C++ 20, mostly for its designated initializers. They help with Vulkan'
 
 ## Shading language
 
-Vulkan does consume shaders in an intermediate format called [SPIR-V](https://www.khronos.org/spirv/). This decouples the API from the actual shading language. Initially only GLSL was supported, but in 2026 there are more and better options. One of those is [Slang](https://github.com/shader-slang) and that's what we'll be using for this tutorial. The language itself is more modern than GLSL and offers some convenient features.
+Vulkan consumes shaders in an intermediate format called [SPIR-V](https://www.khronos.org/spirv/). This decouples the API from the actual shading language. Initially only GLSL was supported, but in 2026 there are more and better options. One of those is [Slang](https://github.com/shader-slang), and that's what we'll be using for this tutorial. The language itself is more modern than GLSL and offers some convenient features.
 
 ## Vulkan SDK
 
@@ -105,7 +105,7 @@ VkApplicationInfo appInfo{
 };
 ```
 
-Most important is `apiVersion`, which tells Vulkan that we want to use Vulkan 1.3. Using a higher api version gives us more features out-of-the box that otherwise would have to be used via extensions. [Vulkan 1.3](https://docs.vulkan.org/refpages/latest/refpages/source/VK_VERSION_1_3.html) is widely supported and adds a lot of features to the Vulkan core that make it easier to use. `pApplicationName` can be used to identify your application.
+Most important is the `apiVersion`, which tells Vulkan that we want to use Vulkan 1.3. Using a higher API version gives us more features out of the box that otherwise would have to be used via extensions. [Vulkan 1.3](https://docs.vulkan.org/refpages/latest/refpages/source/VK_VERSION_1_3.html) is widely supported and adds a lot of features to the Vulkan core that make it easier to use. `pApplicationName` can be used to identify your application.
 
 !!! Info
 	
@@ -231,7 +231,7 @@ const VkPhysicalDeviceFeatures enabledVk10Features{
 
 `descriptorBindingVariableDescriptorCount` and `runtimeDescriptorArray` are related to descriptor indexing, the rest of the names match the actual feature.
 
-We also enable [anisotropic filtering](https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceFeatures.html#_members) for textures images for better filtering.
+We also enable [anisotropic filtering](https://docs.vulkan.org/refpages/latest/refpages/source/VkPhysicalDeviceFeatures.html#_members) for texture images for better filtering.
 
 !!! Info
 
@@ -292,7 +292,7 @@ But that's where libraries like SFML come into play. They take care of all the p
 
 !!! Tip
 
-	Libraries like SFML, gflw or SDL also take care of other platform specific functionality like input, audio and networking (to a varying degree).
+	Libraries like SFML, glfw or SDL also take care of other platform specific functionality like input, audio and networking (to a varying degree).
 
 First we create a window:
 
@@ -336,7 +336,7 @@ VkSwapchainCreateInfoKHR swapchainCI{
 chk(vkCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapchain));
 ```
 
-We're using the 4 component color format `VK_FORMAT_B8G8R8A8_SRGB` with a non-linear sRGB [color space](https://docs.vulkan.org/refpages/latest/refpages/source/VkColorSpaceKHR.html) `VK_COLORSPACE_SRGB_NONLINEAR_KHR`. This combination is guaranteed to be available everywhere. Different combinations would require checking for support. `minImageCount` will be the minimum no. of images w get from the swapchain. This value varies between GPUs, hence why we use the information we earlier requested from the surface. `presentMode` defines the way in which images are presented to the screen. [`VK_PRESENT_MODE_FIFO_KHR`](https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html#) is a v-synced mode and the only mode guaranteed to be available everywhere.
+We're using the 4 component color format `VK_FORMAT_B8G8R8A8_SRGB` with a non-linear sRGB [color space](https://docs.vulkan.org/refpages/latest/refpages/source/VkColorSpaceKHR.html) `VK_COLORSPACE_SRGB_NONLINEAR_KHR`. This combination is guaranteed to be available everywhere. Different combinations would require checking for support. `minImageCount` will be the minimum number of images we get from the swapchain. This value varies between GPUs, hence why we use the information we earlier requested from the surface. `presentMode` defines the way in which images are presented to the screen. [`VK_PRESENT_MODE_FIFO_KHR`](https://docs.vulkan.org/refpages/latest/refpages/source/VkPresentModeKHR.html#) is a v-synced mode and the only mode guaranteed to be available everywhere.
 
 !!! Note
 
@@ -389,11 +389,11 @@ VmaAllocationCreateInfo allocCI{
 vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr);
 ```	
 
-One thing that makes VMA so convenient is [`VMA_MEMORY_USAGE_AUTO`](https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/choosing_memory_type.html). This usage flag will have VMA select the required usage flags automatically based on the other values you pass in for the allocation and/or buffer create info. There are some cases where you might be better off explicitly stating usage flags, but in most cases, the auto flag ist he perfect fit. The `VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT` flag tells VMA to create a separate memory allocation for this resource, which is recommended for e.g. large image attachments.
+One thing that makes VMA so convenient is [`VMA_MEMORY_USAGE_AUTO`](https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/choosing_memory_type.html). This usage flag will have VMA select the required usage flags automatically based on the other values you pass in for the allocation and/or buffer create info. There are some cases where you might be better off explicitly stating usage flags, but in most cases the auto flag is the perfect fit. The `VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT` flag tells VMA to create a separate memory allocation for this resource, which is recommended for e.g. large image attachments.
 
 !!! Tip
 
-	We only need a single image, even if we do double buffering in other places. That's because the image is only every accessed by the GPU and the GPU can only ever write to a single depth image at a time. This differs from resources shared by the CPU and the GPU, but more on that later.
+	We only need a single image, even if we do double buffering in other places. That's because the image is only ever accessed by the GPU and the GPU can only ever write to a single depth image at a time. This differs from resources shared by the CPU and the GPU, but more on that later.
 
 Images in Vulkan are not accessed directly, but rather through [views](https://docs.vulkan.org/spec/latest/chapters/resources.html#VkImageView), a common concept in programming. This adds flexibility and allows different access patterns for the same image.
 
@@ -427,7 +427,7 @@ struct Vertex {
 };
 ```
 
-We're using the [tinyobjloader library](https://github.com/tinyobjloader/tinyobjloader) to the load .obj files. It does all the parsing and gives us structured access to the data contained in that file:
+We're using the [tinyobjloader library](https://github.com/tinyobjloader/tinyobjloader) to load .obj files. It does all the parsing and gives us structured access to the data contained in that file:
 
 ```cpp
 // Mesh data
@@ -558,7 +558,7 @@ If we were to use older Vulkan versions we now *would* have to deal with descrip
 
 But by using Vulkan 1.3's [Buffer device address](https://docs.vulkan.org/guide/latest/buffer_device_address.html) feature, we can do away with descriptors (for buffers). Instead of having to access them through descriptors, we can access buffers via their address using pointer syntax in the shader. Not only does that make things easier to understand, it also removes some coupling and requires less code.
 
-As mentioned in [the previous chapter](#cpu-and-gpu-parallelism) we create one uniform buffer per max. number of frames in flight. That way we can update one buffer on the CPU while the GPU reads from another one. This makes sure we don't run into any read/write hazards where the CPU starts updating values while the GPU is still reading them:
+As mentioned in [the previous chapter](#cpu-and-gpu-parallelism), we create one uniform buffer per the maximum number of frames in flight. That way we can update one buffer on the CPU while the GPU reads from another one. This ensures we don't run into any read/write hazards where the CPU starts updating values while the GPU is still reading them:
 
 ```cpp
 for (auto i = 0; i < maxFramesInFlight; i++) {
@@ -590,7 +590,7 @@ Creating uniform buffers is similar to creating the vertex/index buffers for our
 }
 ```
 
-To be able to access the buffer in our shader, we then get it's device address and store it for later access.
+To be able to access the buffer in our shader, we then get its device address and store it for later access.
 
 ## Synchronization objects
 
@@ -598,7 +598,7 @@ Another area where Vulkan is very explicit is [synchronization](https://docs.vul
 
 !!! Warning
 
-	Getting synchronization right in Vulkan can be very hard. Esp. as wrong/missing sync might not be visible on all GPUs or situations. Sometimes it only shows with low framerates or on mobile devices. The [validation layers](#validation-layers) include a way to check this with the synchronization validation preset. Make sure to enable it from time to time and check for any hazards reported.
+	Getting synchronization right in Vulkan can be very hard, especially since wrong or missing synchronization might not be visible on all GPUs or in all situations. Sometimes it only shows with low frame rates or on mobile devices. The [validation layers](#validation-layers) include a way to check this with the synchronization validation preset. Make sure to enable it from time to time and check for any hazards reported.
 
 We'll be using different means of synchronization during this tutorial:
 
@@ -768,7 +768,7 @@ VkCommandBufferAllocateInfo cbOneTimeAI{
 chk(vkAllocateCommandBuffers(device, &cbOneTimeAI, &cbOneTime));
 ```
 
-We can then start record the commands required to get image data to it's destination:
+We can then start recording the commands required to get image data to its destination:
 
 ```cpp
 VkCommandBufferBeginInfo cbOneTimeBI{
@@ -826,7 +826,7 @@ It might look a bit overwhelming at first but it's easily explained. Earlier on 
 
 	Extensions that would make this easier are [VK_EXT_host_image_copy](https://www.khronos.org/blog/copying-images-on-the-host-in-vulkan), allowing for copying image date directly from the CPU without having to use a command buffer and [VK_KHR_unified_image_layouts](https://www.khronos.org/blog/so-long-image-layouts-simplifying-vulkan-synchronisation), simplifying image layouts. These aren't widely supported yet, but future candidates for making Vulkan easier to use.
 
-Later on we'll sample these textures in our shader. How sampling is done in the shader is defined by a sampler object. We want smooth linear filtering, so we enable [anisotropic filter](https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-texel-anisotropic-filtering) to reduce blur and aliasing. We also set the max. LOD do use all mip levels:
+Later on we'll sample these textures in our shader. How sampling is done in the shader is defined by a sampler object. We want smooth linear filtering, so we enable [anisotropic filter](https://docs.vulkan.org/spec/latest/chapters/textures.html#textures-texel-anisotropic-filtering) to reduce blur and aliasing. We also set the max. LOD to use all mip levels:
 
 ```cpp
 VkSamplerCreateInfo samplerCI{
@@ -1263,7 +1263,7 @@ Unlike (command) buffers, we don't have direct control over the [swapchain image
 vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex);
 ```
 
-It's important to use the `image index` returned by [vkAcquireNextImageKHR](https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireNextImageKHR.html) to access the swapchain images. There is no guarantee that images are acquired in consecutive order. That's one of the reasons whe have two indices.
+It's important to use the `image index` returned by [vkAcquireNextImageKHR](https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireNextImageKHR.html) to access the swapchain images. There is no guarantee that images are acquired in consecutive order. That's one of the reasons we have two indices.
 
 We also pass a [semaphore](#synchronization-objects) to this function which will be used later on at command buffer submission.
 
@@ -1290,9 +1290,9 @@ This works because the [uniform buffers](#uniform-buffers) are stored in a memor
 
 ### Record command buffers
 
-Now we can finally start recoding actual GPU work to get something displayed to the screen.PA lot of the things we need for that have been discussed earlier on, so even though this will be a lot of code, it should be easy to follow. As mentioned in [command buffers](#command-buffers), commands are not directly issued to the GPU in Vulkan but rather recorded to command buffers. That's exactly what we are not going to do, record the commands for a single render frame.
+Now we can finally start recording actual GPU work to get something displayed to the screen. A lot of the things we need for that have been discussed earlier, so even though this will be a lot of code, it should be easy to follow. As mentioned in [command buffers](#command-buffers), commands are not directly issued to the GPU in Vulkan but rather recorded to command buffers. That's exactly what we are going to do: record the commands for a single render frame.
 
-You might be tempted to pre-record command buffers and reuse them until something changes that would require re-recording. This makes things unnecessary complicated though, as recording command buffers is pretty fast and can be done in parallel on the CPU.
+You might be tempted to pre-record command buffers and reuse them until something changes that would require re-recording. This makes things unnecessarily complicated though, as recording command buffers is pretty fast and can be done in parallel on the CPU.
 
 !!! Tip
 
@@ -1389,7 +1389,7 @@ VkRenderingAttachmentInfo depthAttachmentInfo{
 };
 ```
 
-We set up one [VkRenderingAttachmentInfo](https://docs.vulkan.org/refpages/latest/refpages/source/VkRenderingAttachmentInfo.html) for the swapchain image used as the color attachment and the depth image used as the depth attachment. Both will be cleared to their respective `clearValue` at the start of a render pass with `loadOp` set to `VK_ATTACHMENT_LOAD_OP_CLEAR`. `storeOp` for the color attachment is configured to keep it's contents, as we still need them to be presented to the screen. We don't need the depth information once we're done rendering, so we literally don't care what happens with it's contents after the render pass. Layouts for both must match what we transitioned them earlier on.
+We set up one [VkRenderingAttachmentInfo](https://docs.vulkan.org/refpages/latest/refpages/source/VkRenderingAttachmentInfo.html) for the swapchain image used as the color attachment and the depth image used as the depth attachment. Both will be cleared to their respective `clearValue` at the start of a render pass with `loadOp` set to `VK_ATTACHMENT_LOAD_OP_CLEAR`. `storeOp` for the color attachment is configured to keep its contents, as we still need them to be presented to the screen. We don't need the depth information once we're done rendering, so we literally don't care what happens with its contents after the render pass. Layouts for both must match what we transitioned them earlier on.
 
 Calling [vkCmdBeginRendering](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdBeginRendering.html) will then start our dynamic render pass instance with above attachment configuration:
 
@@ -1579,7 +1579,7 @@ while (const std::optional event = window.pollEvent()) {
 }
 ```
 
-We want to have some interactivity in our application. For that we calculate rotation for the currently selected model instance based on mouse movement when the left button is down in the `MouseMoved` event. And similar with the mousewheel in `MouseWheelScrolled` to allow zooming the camera in and out. The `keyPressed` event let's us toggle between the model instances.
+We want to have some interactivity in our application. For that we calculate rotation for the currently selected model instance based on mouse movement when the left button is down in the `MouseMoved` event. And similar with the mousewheel in `MouseWheelScrolled` to allow zooming the camera in and out. The `keyPressed` event lets us toggle between the model instances.
 
 The `Closed` event is called when our application is to be closed, no matter how. Calling `close` on our SFML window will exit the outer render loop (which checks if the window is open) and jumps to the [clean up](#cleaning-up) part of the code.
 
