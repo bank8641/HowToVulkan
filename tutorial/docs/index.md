@@ -995,9 +995,9 @@ chk(vkCreateShaderModule(device, &shaderModuleCI, nullptr, &shaderModule));
 
 ## The shader
 
-Even though shading languages are limited compared to CPU programming languages, they still allow for long and complex shaders. Our shader is comparatively simple though:
+Although shading languages aren’t as powerful as CPU programming languages, they can still handle complex scenarios. Our shader is intentionally kept simple:
 
-```slang
+```hlsl
 struct VSInput {
     float3 Pos;
     float3 Normal;
