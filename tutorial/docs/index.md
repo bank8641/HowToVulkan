@@ -63,7 +63,7 @@ Vulkan consumes shaders in an intermediate format called [SPIR-V](https://www.kh
 
 ## Vulkan SDK
 
-While it's not required for developing Vulkan applications, the [LunarG Vulkan SDK](https://vulkan.lunarg.com/sdk/home) provides a convenient way to install commonly used libraries and tools, some of which are used in this tutorial. It's therefore recommended to install this.
+While it's not required for developing Vulkan applications, the [LunarG Vulkan SDK](https://vulkan.lunarg.com/sdk/home) provides a convenient way to install commonly used libraries and tools, some of which are used in this tutorial. It's therefore recommended to install this. When installing, make sure the GLM, Volk and Vulkan Memory Allocator components are selected (which is true by default).
 
 ## Validation layers
 
