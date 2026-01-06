@@ -330,7 +330,6 @@ VkSwapchainCreateInfoKHR swapchainCI{
 	.imageExtent{ .width = surfaceCaps.currentExtent.width, .height = surfaceCaps.currentExtent.height },
 	.imageArrayLayers = 1,
 	.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-	.queueFamilyIndexCount = queueFamily,
 	.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 	.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
 	.presentMode = VK_PRESENT_MODE_FIFO_KHR
