@@ -178,9 +178,9 @@ int main(int argc, char* argv[])
 	};
 	chk(vkCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapchain));
 	uint32_t imageCount{ 0 };
-	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+	chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
 	swapchainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+	chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
 	swapchainImageViews.resize(imageCount);
 	for (auto i = 0; i < imageCount; i++) {
 		VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = swapchainImages[i], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = imageFormat, .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1 } };
@@ -201,7 +201,7 @@ int main(int argc, char* argv[])
 		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 	};
 	VmaAllocationCreateInfo allocCI{ .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, .usage = VMA_MEMORY_USAGE_AUTO };
-	vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr);
+	chk(vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr));
 	VkImageViewCreateInfo depthViewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = depthImage, .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = depthFormat, .subresourceRange{.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 } };
 	chk(vkCreateImageView(device, &depthViewCI, nullptr, &depthImageView));
 	// Mesh data
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
 	VmaAllocationCreateInfo bufferAllocCI{ .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, .usage = VMA_MEMORY_USAGE_AUTO };
 	chk(vmaCreateBuffer(allocator, &bufferCI, &bufferAllocCI, &vBuffer, &vBufferAllocation, nullptr));
 	void* bufferPtr{ nullptr };
-	vmaMapMemory(allocator, vBufferAllocation, &bufferPtr);
+	chk(vmaMapMemory(allocator, vBufferAllocation, &bufferPtr));
 	memcpy(bufferPtr, vertices.data(), vBufSize);
 	memcpy(((char*)bufferPtr) + vBufSize, indices.data(), iBufSize);
 	vmaUnmapMemory(allocator, vBufferAllocation);
@@ -237,7 +237,7 @@ int main(int argc, char* argv[])
 		VkBufferCreateInfo uBufferCI{ .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO, .size = sizeof(ShaderData), .usage = VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT };
 		VmaAllocationCreateInfo uBufferAllocCI{ .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_HOST_ACCESS_ALLOW_TRANSFER_INSTEAD_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, .usage = VMA_MEMORY_USAGE_AUTO };
 		chk(vmaCreateBuffer(allocator, &uBufferCI, &uBufferAllocCI, &shaderDataBuffers[i].buffer, &shaderDataBuffers[i].allocation, nullptr));
-		vmaMapMemory(allocator, shaderDataBuffers[i].allocation, &shaderDataBuffers[i].mapped);
+		chk(vmaMapMemory(allocator, shaderDataBuffers[i].allocation, &shaderDataBuffers[i].mapped));
 		VkBufferDeviceAddressInfo uBufferBdaInfo{ .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO, .buffer = shaderDataBuffers[i].buffer };
 		shaderDataBuffers[i].deviceAddress = vkGetBufferDeviceAddress(device, &uBufferBdaInfo);
 	}
@@ -286,7 +286,7 @@ int main(int argc, char* argv[])
 		VmaAllocationCreateInfo imgSrcAllocCI{ .flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT, .usage = VMA_MEMORY_USAGE_AUTO };
 		chk(vmaCreateBuffer(allocator, &imgSrcBufferCI, &imgSrcAllocCI, &imgSrcBuffer, &imgSrcAllocation, nullptr));
 		void* imgSrcBufferPtr{ nullptr };
-		vmaMapMemory(allocator, imgSrcAllocation, &imgSrcBufferPtr);
+		chk(vmaMapMemory(allocator, imgSrcAllocation, &imgSrcBufferPtr));
 		memcpy(imgSrcBufferPtr, ktxTexture->pData, ktxTexture->dataSize);
 		VkFenceCreateInfo fenceOneTimeCI{ .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
 		VkFence fenceOneTime{};
@@ -295,7 +295,7 @@ int main(int argc, char* argv[])
 		VkCommandBufferAllocateInfo cbOneTimeAI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, .commandPool = commandPool, .commandBufferCount = 1 };
 		chk(vkAllocateCommandBuffers(device, &cbOneTimeAI, &cbOneTime));
 		VkCommandBufferBeginInfo cbOneTimeBI{ .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
-		vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI);
+		chk(vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI));
 		VkImageMemoryBarrier2 barrierTexImage{
 			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 			.srcStageMask = VK_PIPELINE_STAGE_2_NONE,
@@ -333,7 +333,7 @@ int main(int argc, char* argv[])
 		};
 		barrierTexInfo.pImageMemoryBarriers = &barrierTexRead;
 		vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
-		vkEndCommandBuffer(cbOneTime);
+		chk(vkEndCommandBuffer(cbOneTime));
 		VkSubmitInfo oneTimeSI{ .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, .commandBufferCount = 1, .pCommandBuffers = &cbOneTime };
 		chk(vkQueueSubmit(queue, 1, &oneTimeSI, fenceOneTime));
 		chk(vkWaitForFences(device, 1, &fenceOneTime, VK_TRUE, UINT64_MAX));
@@ -382,7 +382,7 @@ int main(int argc, char* argv[])
 	slangModule->getTargetCode(0, spirv.writeRef());
 	VkShaderModuleCreateInfo shaderModuleCI{ .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO, .codeSize = spirv->getBufferSize(), .pCode = (uint32_t*)spirv->getBufferPointer() };
 	VkShaderModule shaderModule{};
-	vkCreateShaderModule(device, &shaderModuleCI, nullptr, &shaderModule);
+	chk(vkCreateShaderModule(device, &shaderModuleCI, nullptr, &shaderModule));
 	// Pipeline
 	VkPushConstantRange pushConstantRange{ .stageFlags = VK_SHADER_STAGE_VERTEX_BIT, .size = sizeof(VkDeviceAddress) };
 	VkPipelineLayoutCreateInfo pipelineLayoutCI{ .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO, .setLayoutCount = 1, .pSetLayouts = &descriptorSetLayoutTex, .pushConstantRangeCount = 1, .pPushConstantRanges = &pushConstantRange };
@@ -436,7 +436,7 @@ int main(int argc, char* argv[])
 		// Sync
 		chk(vkWaitForFences(device, 1, &fences[frameIndex], true, UINT64_MAX));
 		chk(vkResetFences(device, 1, &fences[frameIndex]));
-		vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex);
+		chk(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex));
 		// Update shader data
 		shaderData.projection = glm::perspective(glm::radians(45.0f), (float)window.getSize().x / (float)window.getSize().y, 0.1f, 32.0f);
 		shaderData.view = glm::translate(glm::mat4(1.0f), camPos);
@@ -447,9 +447,9 @@ int main(int argc, char* argv[])
 		memcpy(shaderDataBuffers[frameIndex].mapped, &shaderData, sizeof(ShaderData));
 		// Build command buffer
 		auto cb = commandBuffers[frameIndex];
-		vkResetCommandBuffer(cb, 0);
+		chk(vkResetCommandBuffer(cb, 0));
 		VkCommandBufferBeginInfo cbBI { .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
-		vkBeginCommandBuffer(cb, &cbBI);
+		chk(vkBeginCommandBuffer(cb, &cbBI));
 		std::array<VkImageMemoryBarrier2, 2> outputBarriers{
 			VkImageMemoryBarrier2{
 				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
@@ -526,7 +526,7 @@ int main(int argc, char* argv[])
 		};
 		VkDependencyInfo barrierPresentDependencyInfo{ .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO, .imageMemoryBarrierCount = 1, .pImageMemoryBarriers = &barrierPresent };
 		vkCmdPipelineBarrier2(cb, &barrierPresentDependencyInfo);
-		vkEndCommandBuffer(cb);
+		chk(vkEndCommandBuffer(cb));
 		// Submit to graphics queue
 		VkPipelineStageFlags waitStages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		VkSubmitInfo submitInfo{
@@ -577,7 +577,7 @@ int main(int argc, char* argv[])
 			}
 			// Window resize
 			if (const auto* resized = event->getIf<sf::Event::Resized>()) {
-				vkDeviceWaitIdle(device);
+				chk(vkDeviceWaitIdle(device));
 				chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(devices[deviceIndex], surface, &surfaceCaps));
 				swapchainCI.oldSwapchain = swapchain;
 				swapchainCI.imageExtent = { .width = static_cast<uint32_t>(resized->size.x), .height = static_cast<uint32_t>(resized->size.y) };
@@ -585,9 +585,9 @@ int main(int argc, char* argv[])
 				for (auto i = 0; i < imageCount; i++) {
 					vkDestroyImageView(device, swapchainImageViews[i], nullptr);
 				}
-				vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+				chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
 				swapchainImages.resize(imageCount);
-				vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+				chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
 				swapchainImageViews.resize(imageCount);
 				for (auto i = 0; i < imageCount; i++) {
 					VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = swapchainImages[i], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = imageFormat, .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}};

@@ -373,9 +373,9 @@ Something special about the swapchain is that its images are not owned by the ap
 
 ```cpp
 uint32_t imageCount{ 0 };
-vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
 swapchainImages.resize(imageCount);
-vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
 swapchainImageViews.resize(imageCount);
 ```
 
@@ -413,7 +413,7 @@ VmaAllocationCreateInfo allocCI{
 	.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT,
 	.usage = VMA_MEMORY_USAGE_AUTO
 };
-vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr);
+chk(vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr));
 ```	
 
 One thing that makes VMA so convenient is [`VMA_MEMORY_USAGE_AUTO`](https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/choosing_memory_type.html). This usage flag will have VMA select the required usage flags automatically based on the other values you pass in for the allocation and/or buffer create info. There are some cases where you might be better off explicitly stating usage flags, but in most cases the auto flag is the perfect fit. The `VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT` flag tells VMA to create a separate memory allocation for this resource, which is recommended for e.g. large image attachments.
@@ -529,7 +529,7 @@ The `VMA_ALLOCATION_CREATE_MAPPED_BIT` flag lets us map the buffer, which in tur
 
 ```cpp
 void* bufferPtr{ nullptr };
-vmaMapMemory(allocator, vBufferAllocation, &bufferPtr);
+chk(vmaMapMemory(allocator, vBufferAllocation, &bufferPtr));
 memcpy(bufferPtr, vertices.data(), vBufSize);
 memcpy(((char*)bufferPtr) + vBufSize, indices.data(), iBufSize);
 vmaUnmapMemory(allocator, vBufferAllocation);
@@ -603,7 +603,7 @@ for (auto i = 0; i < maxFramesInFlight; i++) {
 		.usage = VMA_MEMORY_USAGE_AUTO
 	};
 	chk(vmaCreateBuffer(allocator, &uBufferCI, &uBufferAllocCI, &shaderDataBuffers[i].buffer, &shaderDataBuffers[i].allocation, nullptr));
-	vmaMapMemory(allocator, shaderDataBuffers[i].allocation, &shaderDataBuffers[i].mapped);
+	chk(vmaMapMemory(allocator, shaderDataBuffers[i].allocation, &shaderDataBuffers[i].mapped));
 ```
 
 Creating these buffers is similar to creating the vertex/index buffers for our mesh. The create info structure states that we want to access this buffer via it's device address (`VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT`). The buffer size must (at least) match that of our CPU data structure. We again use VMA to handle the allocation, using the same flags as for the vertex/index buffer to make sure we get a buffer that's accessible by both the CPU and GPU. Once the buffer has been created we map it persistently. Unlike in older APIs, this is perfectly fine in Vulkan and makes it easier to update the buffers later on, as we can just keep a permanent pointer to the buffer (memory).
@@ -778,7 +778,7 @@ As the buffer was created with the mappable bit, getting the image data into tha
 
 ```cpp
 void* imgSrcBufferPtr{ nullptr };
-vmaMapMemory(allocator, imgSrcAllocation, &imgSrcBufferPtr);
+chk(vmaMapMemory(allocator, imgSrcAllocation, &imgSrcBufferPtr));
 memcpy(imgSrcBufferPtr, ktxTexture->pData, ktxTexture->dataSize);
 ```
 
@@ -806,7 +806,7 @@ VkCommandBufferBeginInfo cbOneTimeBI{
 	.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 	.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
 };
-vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI);
+chk(vkBeginCommandBuffer(cbOneTime, &cbOneTimeBI));
 VkImageMemoryBarrier2 barrierTexImage{
 	.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 	.srcStageMask = VK_PIPELINE_STAGE_2_NONE,
@@ -848,7 +848,7 @@ VkImageMemoryBarrier2 barrierTexRead{
 };
 barrierTexInfo.pImageMemoryBarriers = &barrierTexRead;
 vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
-vkEndCommandBuffer(cbOneTime);
+chk(vkEndCommandBuffer(cbOneTime));
 ```
 
 It might look a bit overwhelming at first but it's easily explained. Earlier on we learned about optimal tiled images, where texels are stored in a hardware-specific layout for optimal access by the GPU. That [layout](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-image-layouts) also defines what operations are possible with an image. That's why we need to change said layout depending on what we want to do next with our image. That's done via a pipeline barrier issued by [vkCmdPipelineBarrier2](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPipelineBarrier2.html). The first one transitions all mip levels of the texture image from the initial undefined layout to a layout that allows us to transfer data to it (`VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL`). We then copy over all the mip levels from our temporary buffer to the image using [vkCmdCopyBufferToImage](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyBufferToImage.html). Finally we transition the mip levels from transfer destination to a layout we can read from in our shader (`VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL`).
@@ -1328,7 +1328,7 @@ The call to [vkWaitForFences](https://docs.vulkan.org/refpages/latest/refpages/s
 As we don't have direct control over the [swapchain images](#swapchain), we need to "ask" (acquire) the swapchain for the next index to be used in this frame:
 
 ```cpp
-vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex);
+chk(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex));
 ```
 
 It's important to use the image index returned by [vkAcquireNextImageKHR](https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireNextImageKHR.html) to access the swapchain images. That's because there is no guarantee that images are acquired in consecutive order. That's one of the reasons we have two indices.
@@ -1364,7 +1364,7 @@ You might be tempted to pre-record command buffers and reuse them until somethin
 
 !!! Note
 
-	Commands that are recorded into a command buffer start with `vkCmd`. They are not directly executed, but only when the command buffer is submitted to a queue (GPU timeline). A common mistake for beginners is to mix those commands with commands that are instantly executed on the CPU timeline. It's important to remember that these two different timelines exist.
+	Commands that are recorded into a command buffer start with `vkCmd`. They are not directly executed, but only when the command buffer is submitted to a queue (GPU timeline). This also explains why these commands don't return a result. A common mistake for beginners is to mix those commands with commands that are instantly executed on the CPU timeline. It's important to remember that these two different timelines exist.
 
 Command buffers have a [lifecycle](https://docs.vulkan.org/spec/latest/chapters/cmdbuffers.html#commandbuffers-lifecycle) that we have to adhere to. For example we can't record commands to it while it's in the executable state. This is also checked by [validation layers](#validation-layers) that would let us know if we misused things.
 
@@ -1372,7 +1372,7 @@ First we need to move the command buffer into the initial state. That's done by 
 
 ```cpp
 auto cb = commandBuffers[frameIndex];
-vkResetCommandBuffer(cb, 0);
+chk(vkResetCommandBuffer(cb, 0));
 ```
 
 Once reset, we can start recording the command buffer:
@@ -1382,7 +1382,7 @@ VkCommandBufferBeginInfo cbBI {
 	.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 	.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
 };
-vkBeginCommandBuffer(cb, &cbBI);
+chk(vkBeginCommandBuffer(cb, &cbBI));
 ```
 
 The [`VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT`](https://docs.vulkan.org/refpages/latest/refpages/source/VkCommandBufferUsageFlagBits.html) flag affects how lifecycle moves to invalid state after execution and can be used as an optimization hint by drivers. After calling [vkBeginCommandBuffer](https://docs.vulkan.org/refpages/latest/refpages/source/vkBeginCommandBuffer.html), which moves the command buffer into recording state, we can start recording the actual commands.
@@ -1668,9 +1668,9 @@ if (const auto* resized = event->getIf<sf::Event::Resized>()) {
 	for (auto i = 0; i < imageCount; i++) {
 		vkDestroyImageView(device, swapchainImageViews[i], nullptr);
 	}
-	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+	chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
 	swapchainImages.resize(imageCount);
-	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+	chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
 	swapchainImageViews.resize(imageCount);
 	for (auto i = 0; i < imageCount; i++) {
 		VkImageViewCreateInfo viewCI{
