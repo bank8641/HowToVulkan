@@ -25,19 +25,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-static inline void chk(VkResult result) {
-	if (result != VK_SUCCESS) {
-		std::cerr << "Vulkan call returned an error (" << result << ")\n";
-		exit(result);
-	}
-}
-static inline void chk(bool result) {
-	if (!result) {
-		std::cerr << "Call returned an error\n";
-		exit(result);
-	}
-}
-
 constexpr uint32_t maxFramesInFlight{ 2 };
 uint32_t imageIndex{ 0 };
 uint32_t frameIndex{ 0 };
@@ -45,6 +32,7 @@ VkInstance instance{ VK_NULL_HANDLE };
 VkDevice device{ VK_NULL_HANDLE };
 VkQueue queue{ VK_NULL_HANDLE };
 VkSurfaceKHR surface{ VK_NULL_HANDLE };
+bool updateSwapchain{ false };
 VkSwapchainKHR swapchain{ VK_NULL_HANDLE };
 VkCommandPool commandPool{ VK_NULL_HANDLE };
 VkPipeline pipeline{ VK_NULL_HANDLE };
@@ -94,6 +82,29 @@ struct Vertex {
 	glm::vec3 normal;
 	glm::vec2 uv;
 };
+
+static inline void chk(VkResult result) {
+	if (result != VK_SUCCESS) {
+		std::cerr << "Vulkan call returned an error (" << result << ")\n";
+		exit(result);
+	}
+}
+static inline void chkSwapchain(VkResult result) {
+	if (result < VK_SUCCESS) {
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			updateSwapchain = true;
+			return;
+		}
+		std::cerr << "Vulkan call returned an error (" << result << ")\n";
+		exit(result);
+	}
+}
+static inline void chk(bool result) {
+	if (!result) {
+		std::cerr << "Call returned an error\n";
+		exit(result);
+	}
+}
 
 int main(int argc, char* argv[])
 {
@@ -436,7 +447,7 @@ int main(int argc, char* argv[])
 		// Sync
 		chk(vkWaitForFences(device, 1, &fences[frameIndex], true, UINT64_MAX));
 		chk(vkResetFences(device, 1, &fences[frameIndex]));
-		chk(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex));
+		chkSwapchain(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex));
 		// Update shader data
 		shaderData.projection = glm::perspective(glm::radians(45.0f), (float)window.getSize().x / (float)window.getSize().y, 0.1f, 32.0f);
 		shaderData.view = glm::translate(glm::mat4(1.0f), camPos);
@@ -549,7 +560,7 @@ int main(int argc, char* argv[])
 			.pSwapchains = &swapchain,
 			.pImageIndices = &imageIndex
 		};
-		chk(vkQueuePresentKHR(queue, &presentInfo));
+		chkSwapchain(vkQueuePresentKHR(queue, &presentInfo));
 		// Event polling
 		sf::Time elapsed = clock.restart();
 		while (const std::optional event = window.pollEvent()) {
@@ -576,32 +587,37 @@ int main(int argc, char* argv[])
 				}
 			}
 			// Window resize
-			if (const auto* resized = event->getIf<sf::Event::Resized>()) {
-				chk(vkDeviceWaitIdle(device));
-				chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(devices[deviceIndex], surface, &surfaceCaps));
-				swapchainCI.oldSwapchain = swapchain;
-				swapchainCI.imageExtent = { .width = static_cast<uint32_t>(resized->size.x), .height = static_cast<uint32_t>(resized->size.y) };
-				chk(vkCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapchain));
-				for (auto i = 0; i < imageCount; i++) {
-					vkDestroyImageView(device, swapchainImageViews[i], nullptr);
-				}
-				chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
-				swapchainImages.resize(imageCount);
-				chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
-				swapchainImageViews.resize(imageCount);
-				for (auto i = 0; i < imageCount; i++) {
-					VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = swapchainImages[i], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = imageFormat, .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1}};
-					chk(vkCreateImageView(device, &viewCI, nullptr, &swapchainImageViews[i]));
-				}
-				vkDestroySwapchainKHR(device, swapchainCI.oldSwapchain, nullptr);
-				vmaDestroyImage(allocator, depthImage, depthImageAllocation);
-				vkDestroyImageView(device, depthImageView, nullptr);
-				depthImageCI.extent = { .width = static_cast<uint32_t>(window.getSize().x), .height = static_cast<uint32_t>(window.getSize().y), .depth = 1 };
-				VmaAllocationCreateInfo allocCI{ .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, .usage = VMA_MEMORY_USAGE_AUTO };
-				chk(vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr));
-				VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = depthImage, .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = depthFormat, .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 } };
-				chk(vkCreateImageView(device, &viewCI, nullptr, &depthImageView));
+			if (event->getIf<sf::Event::Resized>()) {
+				updateSwapchain = true;
 			}
+		}
+		//
+		if (updateSwapchain) {
+			updateSwapchain = false;
+			chk(vkDeviceWaitIdle(device));
+			chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(devices[deviceIndex], surface, &surfaceCaps));
+			swapchainCI.oldSwapchain = swapchain;
+			swapchainCI.imageExtent = { .width = static_cast<uint32_t>(window.getSize().x), .height = static_cast<uint32_t>(window.getSize().y)};
+			chk(vkCreateSwapchainKHR(device, &swapchainCI, nullptr, &swapchain));
+			for (auto i = 0; i < imageCount; i++) {
+				vkDestroyImageView(device, swapchainImageViews[i], nullptr);
+			}
+			chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr));
+			swapchainImages.resize(imageCount);
+			chk(vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data()));
+			swapchainImageViews.resize(imageCount);
+			for (auto i = 0; i < imageCount; i++) {
+				VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = swapchainImages[i], .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = imageFormat, .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, .levelCount = 1, .layerCount = 1} };
+				chk(vkCreateImageView(device, &viewCI, nullptr, &swapchainImageViews[i]));
+			}
+			vkDestroySwapchainKHR(device, swapchainCI.oldSwapchain, nullptr);
+			vmaDestroyImage(allocator, depthImage, depthImageAllocation);
+			vkDestroyImageView(device, depthImageView, nullptr);
+			depthImageCI.extent = { .width = static_cast<uint32_t>(window.getSize().x), .height = static_cast<uint32_t>(window.getSize().y), .depth = 1 };
+			VmaAllocationCreateInfo allocCI{ .flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, .usage = VMA_MEMORY_USAGE_AUTO };
+			chk(vmaCreateImage(allocator, &depthImageCI, &allocCI, &depthImage, &depthImageAllocation, nullptr));
+			VkImageViewCreateInfo viewCI{ .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO, .image = depthImage, .viewType = VK_IMAGE_VIEW_TYPE_2D, .format = depthFormat, .subresourceRange = {.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT, .levelCount = 1, .layerCount = 1 } };
+			chk(vkCreateImageView(device, &viewCI, nullptr, &depthImageView));
 		}
 	}
 	// Tear down
