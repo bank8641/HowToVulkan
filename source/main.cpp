@@ -609,9 +609,11 @@ int main(int argc, char* argv[])
 	for (auto i = 0; i < maxFramesInFlight; i++) {
 		vkDestroyFence(device, fences[i], nullptr);
 		vkDestroySemaphore(device, presentSemaphores[i], nullptr);
-		vkDestroySemaphore(device, renderSemaphores[i], nullptr);
 		vmaUnmapMemory(allocator, shaderDataBuffers[i].allocation);
 		vmaDestroyBuffer(allocator, shaderDataBuffers[i].buffer, shaderDataBuffers[i].allocation);
+	}
+	for (auto i = 0; i < renderSemaphores.size(); i++) {
+		vkDestroySemaphore(device, renderSemaphores[i], nullptr);
 	}
 	vmaDestroyImage(allocator, depthImage, depthImageAllocation);
 	vkDestroyImageView(device, depthImageView, nullptr);
