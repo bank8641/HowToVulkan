@@ -1342,12 +1342,16 @@ The call to [vkWaitForFences](https://docs.vulkan.org/refpages/latest/refpages/s
 As we don't have direct control over the [swapchain images](#swapchain), we need to "ask" (acquire) the swapchain for the next index to be used in this frame:
 
 ```cpp
-chk(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex));
+chkSwapchain(vkAcquireNextImageKHR(device, swapchain, UINT64_MAX, presentSemaphores[frameIndex], VK_NULL_HANDLE, &imageIndex));
 ```
 
 It's important to use the image index returned by [vkAcquireNextImageKHR](https://docs.vulkan.org/refpages/latest/refpages/source/vkAcquireNextImageKHR.html) to access the swapchain images. That's because there is no guarantee that images are acquired in consecutive order. That's one of the reasons we have two indices.
 
 We also pass a [semaphore](#synchronization-objects) to this function which will be used later on at command buffer submission.
+
+!!! Note
+
+	We are using a variation of the `chk` function to check return values of calls related to presentation. This is due to [VK_ERROR_OUT_OF_DATE_KHR](https://docs.vulkan.org/spec/latest/chapters/fundamentals.html#VkResult), which is returned when the surface is no longer compatible with the swapchain. This can occur on certain platforms, e.g. if display orientation changes. To prevent the application from exiting in these cases, we explicitly handle this error in `chkSwapchain`. Instead of exiting, we recreate the swapchain for the next frame.
 
 ### Update shader data
 
@@ -1617,7 +1621,7 @@ VkPresentInfoKHR presentInfo{
 	.pSwapchains = &swapchain,
 	.pImageIndices = &imageIndex
 };
-chk(vkQueuePresentKHR(queue, &presentInfo));
+chkSwapchain(vkQueuePresentKHR(queue, &presentInfo));
 ```
 
 Calling [vkQueuePresentKHR](https://docs.vulkan.org/refpages/latest/refpages/source/vkQueuePresentKHR.html) will enqueue the image for presentation after waiting for the render semaphore. That guarantees the image won't be presented until our rendering commands have finished. 
@@ -1661,7 +1665,7 @@ while (const std::optional event = window.pollEvent()) {
 
 	// Window resize
 	if (const auto* resized = event->getIf<sf::Event::Resized>()) {
-		...
+		updateSwapchain = true;
 	}
 }
 ```
@@ -1670,10 +1674,15 @@ We want to have some interactivity in our application. For that we calculate rot
 
 The `Closed` event is called when our application is to be closed, no matter how. Calling `close` on our SFML window will exit the outer render loop (which checks if the window is open) and jumps to the [clean up](#cleaning-up) part of the code.
 
-Although it's optional, and something games often don't implement, we also handle resizing triggered by the `Resized` event. This require us to recreate some Vulkan objects:
+Although it's optional, and something games often don't implement, we also handle resizing via the `Resized` event, which requires recreating the swapchain and associated resources.
+
+### Recreate swapchain
+
+The swapchain needs to be recreated when the window is resized or if its surface becomes [out-of-date](#acquire-next-image). If any of these operations request an update to the swapchain, we recreate it:
 
 ```cpp
-if (const auto* resized = event->getIf<sf::Event::Resized>()) {
+if (updateSwapchain) {
+	updateSwapchain = false;
 	vkDeviceWaitIdle(device);
 	chk(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(devices[deviceIndex], surface, &surfaceCaps));
 	swapchainCI.oldSwapchain = swapchain;
