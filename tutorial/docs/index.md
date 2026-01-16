@@ -1676,7 +1676,7 @@ The `Closed` event is called when our application is to be closed, no matter how
 
 Although it's optional, and something games often don't implement, we also handle resizing via the `Resized` event, which requires recreating the swapchain and associated resources.
 
-### Swapchain recreation
+### Recreate swapchain
 
 The swapchain needs to be recreated when the window is resized or if its surface becomes [out-of-date](#acquire-next-image). If any of these operations request an update to the swapchain, we recreate it:
 
