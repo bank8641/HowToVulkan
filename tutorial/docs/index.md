@@ -383,10 +383,28 @@ swapchainImageViews.resize(imageCount);
 
 As we're rendering three-dimensional objects, we want to make sure they're properly displayed, no matter from what perspective you look at them, or in which order their triangles are rasterized. That's done via [depth testing](https://docs.vulkan.org/spec/latest/chapters/fragops.html#fragops-depth) and to use that we need to have a depth attachment.
 
-The properties of the depth image are defined in a [`VkImageCreateInfo`](https://docs.vulkan.org/refpages/latest/refpages/source/VkImageCreateInfo.html) structure. Some of these are similar to those found at swapchain creation:
+First we need to check what depth format is actually available on the current GPU using [vkGetPhysicalDeviceFormatProperties2](https://docs.vulkan.org/refpages/latest/refpages/source/vkGetPhysicalDeviceFormatProperties2.html):
 
 ```cpp
-const VkFormat depthFormat{ VK_FORMAT_D24_UNORM_S8_UINT };
+std::vector<VkFormat> depthFormatList{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
+VkFormat depthFormat{ VK_FORMAT_UNDEFINED };
+for (VkFormat& format : depthFormatList) {
+	VkFormatProperties2 formatProperties{ .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2 };
+	vkGetPhysicalDeviceFormatProperties2(devices[deviceIndex], format, &formatProperties);
+	if (formatProperties.formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+		depthFormat = format;
+		break;
+	}
+}
+```
+
+!!! Note
+
+	The Vulkan spec [guarantees]((https://docs.vulkan.org/spec/latest/chapters/formats.html#features-required-format-support)) certain format and usage combinations to be supported on all devices. One such guarantee is for depth formats, where either `VK_FORMAT_D32_SFLOAT_S8_UINT` or `VK_FORMAT_D24_UNORM_S8_UINT` must be supported for use as a depth attachment.
+
+The properties of the depth image are then defined in a [`VkImageCreateInfo`](https://docs.vulkan.org/refpages/latest/refpages/source/VkImageCreateInfo.html) structure. Some of these are similar to those found at swapchain creation:
+
+```
 VkImageCreateInfo depthImageCI{
 	.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 	.imageType = VK_IMAGE_TYPE_2D,
@@ -400,10 +418,6 @@ VkImageCreateInfo depthImageCI{
 	.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
 };
 ```	
-!!! Note
-
-	We use a fixed depth format (`VK_FORMAT_D24_UNORM_S8_UINT`). This is a [mandatory format](https://docs.vulkan.org/spec/latest/chapters/formats.html#features-required-format-support), meaning it's supported on every GPU supporting Vulkan. Depending on your needs you could use different formats that e.g. only have depth.
-
 The image is 2D and uses a format with support for depth. We don't need multiple mip levels or Layers. Using optimal tiling with [`VK_IMAGE_TILING_OPTIMAL`](https://docs.vulkan.org/refpages/latest/refpages/source/VkImageTiling.html) makes sure the image is stored in a format best suited for the GPU. We also need to state our desired usage cases for the image, which is [`VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT`](https://docs.vulkan.org/refpages/latest/refpages/source/VkImageUsageFlagBits.html) as we'll use it as the depth attachment for our render output (more on that later). The initial layout defines the image's content, which we don't have to care about, so we set that to [`VK_IMAGE_LAYOUT_UNDEFINED`](https://docs.vulkan.org/refpages/latest/refpages/source/VkImageLayout.html).
 
 This is also the first time we'll use VMA to allocate something in Vulkan. Memory allocation for buffers and images in Vulkan is verbose yet often very similar. With VMA we can do away with a lot of that. VMA also takes care of selecting the correct memory types and usage flags, something that would otherwise require a lot of code to get proper.

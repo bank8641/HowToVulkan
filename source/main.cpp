@@ -198,7 +198,17 @@ int main(int argc, char* argv[])
 		chk(vkCreateImageView(device, &viewCI, nullptr, &swapchainImageViews[i]));
 	}
 	// Depth attachment
-	const VkFormat depthFormat{ VK_FORMAT_D24_UNORM_S8_UINT };
+	std::vector<VkFormat> depthFormatList{ VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT };
+	VkFormat depthFormat{ VK_FORMAT_UNDEFINED };
+	for (VkFormat& format : depthFormatList) {
+		VkFormatProperties2 formatProperties{ .sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_2 };
+		vkGetPhysicalDeviceFormatProperties2(devices[deviceIndex], format, &formatProperties);
+		if (formatProperties.formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+			depthFormat = format;
+			break;
+		}
+	}
+	assert(depthFormat != VK_FORMAT_UNDEFINED);
 	VkImageCreateInfo depthImageCI{
 		.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 		.imageType = VK_IMAGE_TYPE_2D,
@@ -625,9 +635,11 @@ int main(int argc, char* argv[])
 	for (auto i = 0; i < maxFramesInFlight; i++) {
 		vkDestroyFence(device, fences[i], nullptr);
 		vkDestroySemaphore(device, presentSemaphores[i], nullptr);
-		vkDestroySemaphore(device, renderSemaphores[i], nullptr);
 		vmaUnmapMemory(allocator, shaderDataBuffers[i].allocation);
 		vmaDestroyBuffer(allocator, shaderDataBuffers[i].buffer, shaderDataBuffers[i].allocation);
+	}
+	for (auto i = 0; i < renderSemaphores.size(); i++) {
+		vkDestroySemaphore(device, renderSemaphores[i], nullptr);
 	}
 	vmaDestroyImage(allocator, depthImage, depthImageAllocation);
 	vkDestroyImageView(device, depthImageView, nullptr);
