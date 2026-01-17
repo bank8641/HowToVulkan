@@ -601,7 +601,6 @@ int main(int argc, char* argv[])
 				updateSwapchain = true;
 			}
 		}
-		//
 		if (updateSwapchain) {
 			updateSwapchain = false;
 			chk(vkDeviceWaitIdle(device));
