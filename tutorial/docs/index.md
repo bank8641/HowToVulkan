@@ -5,9 +5,11 @@ SPDX-License-Identifier: CC-BY-SA-4.0
 
 # How to Vulkan in 2026
 
-!!! Note
+!!! Tip
 
-	While the tutorial is mostly content complete, it's still a preview and not yet finished.
+	While the tutorial is mostly content complete, it's still being worked on. Minor things might change, and open issues are getting fixed.
+
+	Last updated at 2026-01-17
 
 ## About
 
@@ -63,7 +65,7 @@ Vulkan consumes shaders in an intermediate format called [SPIR-V](https://www.kh
 
 ## Vulkan SDK
 
-While it's not required for developing Vulkan applications, the [LunarG Vulkan SDK](https://vulkan.lunarg.com/sdk/home) provides a convenient way to install commonly used libraries and tools, some of which are used in this tutorial. It's therefore recommended to install this. When installing, make sure the GLM, Volk and Vulkan Memory Allocator components are selected (which is true by default).
+While it's not required for developing Vulkan applications, the [LunarG Vulkan SDK](https://vulkan.lunarg.com/sdk/home) provides a convenient way to install commonly used libraries and tools, some of which are used in this tutorial. It's therefore recommended to install this. When installing, be sure to select the GLM, Volk, and Vulkan Memory Allocator optional components. Alternatively, you can download these from their respective repositories and adjust the include paths in the CMakeLists.txt file.
 
 ## Validation layers
 
