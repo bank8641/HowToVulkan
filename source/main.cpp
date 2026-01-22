@@ -288,7 +288,7 @@ int main(int argc, char* argv[])
 			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
 			.imageType = VK_IMAGE_TYPE_2D,
 			.format = ktxTexture_GetVkFormat(ktxTexture),
-			.extent = {.width = ktxTexture->baseWidth, .height = ktxTexture->baseWidth, .depth = 1 },
+			.extent = {.width = ktxTexture->baseWidth, .height = ktxTexture->baseHeight, .depth = 1 },
 			.mipLevels = ktxTexture->numLevels,
 			.arrayLayers = 1,
 			.samples = VK_SAMPLE_COUNT_1_BIT,
