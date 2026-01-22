@@ -865,9 +865,16 @@ VkImageMemoryBarrier2 barrierTexRead{
 barrierTexInfo.pImageMemoryBarriers = &barrierTexRead;
 vkCmdPipelineBarrier2(cbOneTime, &barrierTexInfo);
 chk(vkEndCommandBuffer(cbOneTime));
+VkSubmitInfo oneTimeSI{
+	.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+	.commandBufferCount = 1,
+	.pCommandBuffers = &cbOneTime
+};
+chk(vkQueueSubmit(queue, 1, &oneTimeSI, fenceOneTime));
+chk(vkWaitForFences(device, 1, &fenceOneTime, VK_TRUE, UINT64_MAX));
 ```
 
-It might look a bit overwhelming at first but it's easily explained. Earlier on we learned about optimal tiled images, where texels are stored in a hardware-specific layout for optimal access by the GPU. That [layout](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-image-layouts) also defines what operations are possible with an image. That's why we need to change said layout depending on what we want to do next with our image. That's done via a pipeline barrier issued by [vkCmdPipelineBarrier2](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPipelineBarrier2.html). The first one transitions all mip levels of the texture image from the initial undefined layout to a layout that allows us to transfer data to it (`VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL`). We then copy over all the mip levels from our temporary buffer to the image using [vkCmdCopyBufferToImage](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyBufferToImage.html). Finally we transition the mip levels from transfer destination to a layout we can read from in our shader (`VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL`).
+It might look a bit overwhelming at first but it's easily explained. Earlier on we learned about optimal tiled images, where texels are stored in a hardware-specific layout for optimal access by the GPU. That [layout](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-image-layouts) also defines what operations are possible with an image. That's why we need to change said layout depending on what we want to do next with our image. That's done via a pipeline barrier issued by [vkCmdPipelineBarrier2](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPipelineBarrier2.html). The first one transitions all mip levels of the texture image from the initial undefined layout to a layout that allows us to transfer data to it (`VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL`). We then copy over all the mip levels from our temporary buffer to the image using [vkCmdCopyBufferToImage](https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdCopyBufferToImage.html). Finally we transition the mip levels from transfer destination to a layout we can read from in our shader (`VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL`). Submitting this command buffer to the graphics queue then executes all these commands. Command buffer submissions will be explained in depth [later on](#submit-command-buffer).
 
 !!! Tip
 
